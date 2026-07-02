@@ -140,6 +140,47 @@ body {
   border-color: var(--ink);
   background: rgba(91, 95, 239, 0.22);
 }
+.toolbar {
+  position: fixed;
+  width: 168px;
+
+  /* allows the flap to sit outside */
+  overflow: visible;
+}
+.toolbar-flap {
+  position: absolute;
+
+  top: 50%;
+  right: -18px;
+  transform: translateY(-50%);
+
+  width: 22px;
+  height: 60px;
+
+  border: 1px solid var(--panel-border);
+  border-left: none;
+
+  border-radius: 0 12px 12px 0;
+
+  background: var(--panel-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  color: var(--text-dim);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: background .15s, color .15s;
+}
+
+.toolbar-flap:hover {
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+}
 
 .swatch-grid {
   display: grid;

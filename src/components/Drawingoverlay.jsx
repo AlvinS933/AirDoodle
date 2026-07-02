@@ -24,6 +24,7 @@ export default function DrawingOverlay() {
   const [drawMode, setDrawMode] = useState(true);
   const [strokeCount, setStrokeCount] = useState(0);
 
+  const [collapsed, setCollapsed] = useState(false);
   const [toolbarPos, setToolbarPos] = useState({
     x: 20,
     y: window.innerHeight / 2 - 150, // approximate initial center
@@ -162,7 +163,11 @@ export default function DrawingOverlay() {
         className="toolbar"
         onMouseEnter={handleToolbarEnter}
         onMouseLeave={handleToolbarLeave}
-        style={{ left: toolbarPos.x, top: toolbarPos.y }}
+        style={{
+          left: collapsed ? toolbarPos.x - 168 : toolbarPos.x,
+          top: toolbarPos.y,
+          transition: draggingRef.current ? "none" : "left 0.2s ease",
+        }}
       >
         <div
           className="toolbar-header"
@@ -271,6 +276,16 @@ export default function DrawingOverlay() {
             Quit
           </button>
         </div>
+        <button
+          className="toolbar-flap"
+          title={collapsed ? "Show toolbar" : "Hide toolbar"}
+          onClick={() => {
+            setDrawMode(false);
+            setCollapsed((prev) => !prev);
+          }}
+        >
+          {collapsed ? "▶" : "◀"}
+        </button>
       </div>
     </div>
   );
