@@ -52,9 +52,9 @@ body {
 
 .toolbar {
   position: fixed;
-  top: 50%;
+  /* top: 50%;
   left: 20px;
-  transform: translateY(-50%);
+  transform: translateY(-50%); */
   width: 168px;
   display: flex;
   flex-direction: column;
@@ -66,6 +66,15 @@ body {
   box-shadow: 0 12px 32px var(--panel-shadow);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+.toolbar-header {
+  cursor: grab;
+  user-select: none;
+}
+
+.toolbar-header:active {
+  cursor: grabbing;
 }
 
 .toolbar-header {

@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const PRESET_COLORS = ['#f5f5f7', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'];
+const PRESET_COLORS = [
+  "#f5f5f7",
+  "#ef4444",
+  "#f59e0b",
+  "#22c55e",
+  "#3b82f6",
+  "#a855f7",
+];
 const MIN_SIZE = 2;
 const MAX_SIZE = 40;
 
@@ -11,11 +18,18 @@ export default function DrawingOverlay() {
   const activeStrokeRef = useRef(null);
   const isDrawingRef = useRef(false);
 
-  const [tool, setTool] = useState('pen'); // 'pen' | 'eraser'
-  const [color, setColor] = useState('#f5f5f7');
+  const [tool, setTool] = useState("pen"); // 'pen' | 'eraser'
+  const [color, setColor] = useState("#f5f5f7");
   const [size, setSize] = useState(6);
   const [drawMode, setDrawMode] = useState(true);
   const [strokeCount, setStrokeCount] = useState(0);
+
+  const [toolbarPos, setToolbarPos] = useState({
+    x: 20,
+    y: window.innerHeight / 2 - 150, // approximate initial center
+  });
+  const draggingRef = useRef(false);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
 
   // --- canvas setup & resize handling -------------------------------------
   const redrawAll = useCallback(() => {
@@ -30,7 +44,7 @@ export default function DrawingOverlay() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     ctxRef.current = ctx;
 
     const resize = () => {
@@ -39,8 +53,8 @@ export default function DrawingOverlay() {
       redrawAll();
     };
     resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
   }, [redrawAll]);
 
   // --- draw-mode / click-through plumbing ---------------------------------
@@ -61,6 +75,35 @@ export default function DrawingOverlay() {
   };
 
   // --- pointer handlers ----------------------------------------------------
+  const handleToolbarPointerDown = (e) => {
+    e.stopPropagation();
+
+    draggingRef.current = true;
+
+    dragOffsetRef.current = {
+      x: e.clientX - toolbarPos.x,
+      y: e.clientY - toolbarPos.y,
+    };
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleToolbarPointerMove = (e) => {
+    if (!draggingRef.current) return;
+
+    setToolbarPos({
+      x: e.clientX - dragOffsetRef.current.x,
+      y: e.clientY - dragOffsetRef.current.y,
+    });
+  };
+
+  const handleToolbarPointerUp = (e) => {
+    draggingRef.current = false;
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  };
   const handlePointerDown = (e) => {
     if (!drawMode) return;
     isDrawingRef.current = true;
@@ -108,7 +151,7 @@ export default function DrawingOverlay() {
       <canvas
         ref={canvasRef}
         className="overlay-canvas"
-        style={{ cursor: drawMode ? 'crosshair' : 'default' }}
+        style={{ cursor: drawMode ? "crosshair" : "default" }}
         onMouseDown={handlePointerDown}
         onMouseMove={handlePointerMove}
         onMouseUp={endStroke}
@@ -119,23 +162,34 @@ export default function DrawingOverlay() {
         className="toolbar"
         onMouseEnter={handleToolbarEnter}
         onMouseLeave={handleToolbarLeave}
+        style={{ left: toolbarPos.x, top: toolbarPos.y }}
       >
-        <div className="toolbar-header">
-          <span className={`status-dot ${drawMode ? 'status-on' : 'status-off'}`} />
-          <span className="toolbar-label">{drawMode ? 'Drawing' : 'Click-through'}</span>
+        <div
+          className="toolbar-header"
+          onPointerDown={handleToolbarPointerDown}
+          onPointerMove={handleToolbarPointerMove}
+          onPointerUp={handleToolbarPointerUp}
+          onPointerCancel={handleToolbarPointerUp}
+        >
+          <span
+            className={`status-dot ${drawMode ? "status-on" : "status-off"}`}
+          />
+          <span className="toolbar-label">
+            {drawMode ? "Drawing" : "Click-through"}
+          </span>
         </div>
 
         <div className="toolbar-section tool-row">
           <button
-            className={`tool-btn ${tool === 'pen' ? 'active' : ''}`}
-            onClick={() => setTool('pen')}
+            className={`tool-btn ${tool === "pen" ? "active" : ""}`}
+            onClick={() => setTool("pen")}
             title="Pen"
           >
             ✎
           </button>
           <button
-            className={`tool-btn ${tool === 'eraser' ? 'active' : ''}`}
-            onClick={() => setTool('eraser')}
+            className={`tool-btn ${tool === "eraser" ? "active" : ""}`}
+            onClick={() => setTool("eraser")}
             title="Eraser"
           >
             ▢
@@ -148,7 +202,7 @@ export default function DrawingOverlay() {
             {PRESET_COLORS.map((c) => (
               <button
                 key={c}
-                className={`swatch ${color === c ? 'active' : ''}`}
+                className={`swatch ${color === c ? "active" : ""}`}
                 style={{ background: c }}
                 onClick={() => setColor(c)}
               />
@@ -171,8 +225,9 @@ export default function DrawingOverlay() {
               style={{
                 width: size,
                 height: size,
-                background: tool === 'eraser' ? 'transparent' : color,
-                border: tool === 'eraser' ? '2px solid var(--text-dim)' : 'none',
+                background: tool === "eraser" ? "transparent" : color,
+                border:
+                  tool === "eraser" ? "2px solid var(--text-dim)" : "none",
               }}
             />
           </div>
@@ -186,10 +241,18 @@ export default function DrawingOverlay() {
         </div>
 
         <div className="toolbar-section action-row">
-          <button className="action-btn" onClick={handleUndo} disabled={strokeCount === 0}>
+          <button
+            className="action-btn"
+            onClick={handleUndo}
+            disabled={strokeCount === 0}
+          >
             Undo
           </button>
-          <button className="action-btn" onClick={handleClear} disabled={strokeCount === 0}>
+          <button
+            className="action-btn"
+            onClick={handleClear}
+            disabled={strokeCount === 0}
+          >
             Clear
           </button>
         </div>
@@ -199,9 +262,12 @@ export default function DrawingOverlay() {
             className="mode-btn"
             onClick={() => setDrawMode((prev) => !prev)}
           >
-            {drawMode ? 'Pause (⌘⇧D)' : 'Resume (⌘⇧D)'}
+            {drawMode ? "Pause (⌘⇧D)" : "Resume (⌘⇧D)"}
           </button>
-          <button className="close-btn" onClick={() => window.overlayAPI?.closeOverlay()}>
+          <button
+            className="close-btn"
+            onClick={() => window.overlayAPI?.closeOverlay()}
+          >
             Quit
           </button>
         </div>
@@ -213,14 +279,14 @@ export default function DrawingOverlay() {
 // --- canvas drawing helpers -------------------------------------------------
 
 function applyStrokeStyle(ctx, stroke) {
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
   ctx.lineWidth = stroke.size;
-  if (stroke.tool === 'eraser') {
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.strokeStyle = 'rgba(0,0,0,1)';
+  if (stroke.tool === "eraser") {
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.strokeStyle = "rgba(0,0,0,1)";
   } else {
-    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalCompositeOperation = "source-over";
     ctx.strokeStyle = stroke.color;
   }
 }
